@@ -1,4 +1,5 @@
 import React from 'react';
+import detectTime from '../lib/detectTime';
 
 const RecipeDetailHeader = (props) => {
   const {
@@ -18,18 +19,10 @@ const RecipeDetailHeader = (props) => {
     loginAlert,
     size,
     time,
+    option,
+    categoriesId,
   } = props;
 
-  const detectTime = (time) => {
-    switch (time) {
-      case time === 120:
-        return '< 2 hrs';
-      case time === 999:
-        return '2 hrs >';
-      default:
-        return `< ${time} min`;
-    }
-  };
   return (
     <div className='RecipeDetail-container'>
       <div className='RecipeDetail-photoContainer'>
@@ -37,11 +30,11 @@ const RecipeDetailHeader = (props) => {
           <button
             className='RecipeDetail-editBtn'
             onClick={() => editRecipe(_id)}>
-            edit
+            Edit
           </button>
         )}
         {recipeImage ? (
-          <>
+          <div className='RecipeDetail-likeContainer'>
             <img
               src={recipeImage}
               alt={recipeName}
@@ -68,7 +61,7 @@ const RecipeDetailHeader = (props) => {
               <i className='fa-solid fa-heart RecipeDetail-heartIcon'></i>
               {likeCount?.toLocaleString()}
             </span>
-          </>
+          </div>
         ) : (
           <div className='RecipeDetail-noMainPhoto'>No Image Found</div>
         )}
@@ -80,15 +73,28 @@ const RecipeDetailHeader = (props) => {
         </div>
         <p className='RecipeDetail-border'></p>
         <div className='RecipeDetail-recipeInfoContainer'>
-          <div>
-            <i className='fa-solid fa-user-group fa-2x RecipeDetail-servingIcon'></i>
-            <p className='RecipeDetail-serving'>
-              {size > 1 ? `${size} servings` : `${size} serving`}
+          <div className='RecipeDetail-recipeInfoItem'>
+            <i className='fa-solid fa-utensils fa-2x RecipeDetail-utensilsIcon'></i>
+            <p className='RecipeDetail-text'>
+              {refineRecipeName(option?.sort)}
             </p>
           </div>
-          <div>
+
+          <div className='RecipeDetail-recipeInfoItem'>
+            <i className='fa-solid fa-globe fa-2x RecipeDetail-globeIcon'></i>
+            <p className='RecipeDetail-text'>
+              {refineRecipeName(categoriesId?.categoriesName)}
+            </p>
+          </div>
+          <div className='RecipeDetail-recipeInfoItem'>
+            <i className='fa-solid fa-user-group fa-2x RecipeDetail-servingIcon'></i>
+            <p className='RecipeDetail-text'>
+              {!size ? '' : size > 1 ? `${size} servings` : `${size} serving`}
+            </p>
+          </div>
+          <div className='RecipeDetail-recipeInfoItem'>
             <i className='fa-regular fa-clock fa-2x RecipeDetail-timeIcon'></i>
-            <p className='RecipeDetail-time'>{detectTime(time)}</p>
+            <p className='RecipeDetail-text'>{detectTime(time)}</p>
           </div>
         </div>
       </div>

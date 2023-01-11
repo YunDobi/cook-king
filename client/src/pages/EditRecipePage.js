@@ -1,4 +1,4 @@
-import React, { useState, useRef, Fragment, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/navbar/NavBar';
 import './CreateRecipePage.css';
@@ -7,6 +7,7 @@ import RecipeBasicContent from '../components/RecipeBasicContent';
 import IngredientContent from '../components/IngredientContent';
 import RecipeStepContent from '../components/RecipeStepContent';
 import { useDispatch, useSelector } from 'react-redux';
+import { deleteRecipe, updateRecipe } from '../features/recipes/recipeSlice';
 
 import { usePrompt } from '../hooks/NavigationBlocker';
 
@@ -89,7 +90,7 @@ const EditRecipePage = () => {
       });
       setStepsPhotoAdded(stephotoAdd);
       setSteps(allSteps);
-      setCategory(categoriesId[0].categoriesName);
+      setCategory(categoriesId?.categoriesName);
     }
 
     // eslint-disable-next-line
@@ -302,14 +303,24 @@ const EditRecipePage = () => {
     return true;
   };
 
-  console.log('steps', steps);
-
-  const updateRecipe = async () => {
+  const updateRecipeHandler = async () => {
     console.log('updating recipe...');
     if (!checkInputs()) {
       return;
     }
-    //add dispatch update recipe action function here
+    dispatch(
+      updateRecipe(recipe._id, {
+        recipeName: recipename,
+        time: Number(time),
+        option: option,
+        ingredient: ingredients,
+        categoriesName: category,
+        size: Number(servings),
+        step: steps,
+        tags: tags,
+        recipeImage: mainPhoto,
+      })
+    );
     if (recipeError) {
       setError(recipeError);
       return;
@@ -323,15 +334,20 @@ const EditRecipePage = () => {
     }
   };
 
-  const deleteRecipe = () => {
+  const deleteRecipeHandler = () => {
     console.log('deleting recipe...');
     //add dispatch delete recipe action function here
-    setDeleteRecipeMsg(true);
-    setDisablePrompt(true);
-    setTimeout(() => {
-      setDeleteRecipeMsg(false);
-      navigate(-1);
-    }, 2000);
+    dispatch(deleteRecipe(recipe._id));
+    if (recipeError) {
+      setError(recipeError);
+    } else {
+      setDeleteRecipeMsg(true);
+      setDisablePrompt(true);
+      setTimeout(() => {
+        setDeleteRecipeMsg(false);
+        navigate(-2);
+      }, 2000);
+    }
   };
 
   const showErrorMessage = (
@@ -426,10 +442,14 @@ const EditRecipePage = () => {
             addInstruction={addInstruction}
           />
           <div className='CreateRecipe-submitBtnContainer'>
-            <button className='CreateRecipe-deleteBtn' onClick={deleteRecipe}>
+            <button
+              className='CreateRecipe-deleteBtn'
+              onClick={deleteRecipeHandler}>
               Delete
             </button>
-            <button className='CreateRecipe-postBtn' onClick={updateRecipe}>
+            <button
+              className='CreateRecipe-postBtn'
+              onClick={updateRecipeHandler}>
               Update
             </button>
           </div>

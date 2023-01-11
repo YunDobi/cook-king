@@ -1,11 +1,11 @@
 import { createSlice } from '@reduxjs/toolkit';
 import axios from 'axios';
 import api from '../../utils/api';
-import { loadUser } from '../users/userSlice';
+import { getLatestUserInfo, loadUser } from '../users/userSlice';
 
 const initialState = {
   loading: false,
-  recipes: [],
+  recipes: { best: [], brunch: [], dinner: [], snack: [] },
   currentRecipe: {},
   authorRecipes: [],
   error: '',
@@ -21,7 +21,6 @@ const recipeSlice = createSlice({
     },
     createRecipeSuccess(state, action) {
       state.loading = false;
-      state.recipes = [...state.recipes, action.payload];
       state.error = null;
     },
     createRecipeFailure(state, action) {
@@ -83,6 +82,40 @@ const recipeSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
+    updateRecipeLoading(state, action) {
+      state.loading = true;
+    },
+    updateRecipeSuccess(state, action) {
+      state.loading = false;
+      state.currentRecipe = action.payload;
+    },
+    updateRecipeFailure(state, action) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    deleteRecipeLoading(state, action) {
+      state.loading = true;
+      state.error = null;
+    },
+    deleteRecipeSuccess(state, action) {
+      state.loading = false;
+    },
+    deleteRecipeFailure(state, action) {
+      state.loading = false;
+      state.error = action.payload;
+    },
+    getAllRecipiesLoading(state, action) {
+      state.loading = true;
+      state.error = null;
+    },
+    getAllRecipiesSuccess(state, action) {
+      state.loading = false;
+      state.recipes = action.payload;
+    },
+    getAllRecipiesFailure(state, action) {
+      state.loading = false;
+      state.error = action.payload;
+    },
   },
 });
 
@@ -102,6 +135,15 @@ export const {
   getAuthorRecipesLoading,
   getAuthorRecipesSuccess,
   getAuthorRecipesFailure,
+  updateRecipeLoading,
+  updateRecipeSuccess,
+  updateRecipeFailure,
+  deleteRecipeLoading,
+  deleteRecipeSuccess,
+  deleteRecipeFailure,
+  getAllRecipiesLoading,
+  getAllRecipiesSuccess,
+  getAllRecipiesFailure,
 } = recipeSlice.actions;
 
 export default recipeSlice.reducer;
@@ -115,7 +157,7 @@ export const createRecipe = (recipe) => async (dispatch, getState) => {
     } = getState();
 
     const recipes = { ...recipe, id: userInfo._id };
-    await api.post('/api/recipes/', recipes);
+    const { data } = await api.post('/api/recipes/', recipes);
 
     dispatch(createRecipeSuccess());
     dispatch(loadUser());
@@ -187,6 +229,58 @@ export const getAuthorRecipes = (userId) => async (dispatch, getState) => {
   } catch (error) {
     dispatch(
       getAuthorRecipesFailure(
+        error.response && error.response.data.message
+          ? error.response.data.message
+          : error.message
+      )
+    );
+  }
+};
+
+export const updateRecipe =
+  (recipeId, recipe) => async (dispatch, getState) => {
+    try {
+      dispatch(updateRecipeLoading());
+      const { data } = await api.put(`/api/recipes/${recipeId}`, recipe);
+      console.log('data', data);
+      dispatch(updateRecipeSuccess(data));
+      dispatch(loadUser());
+    } catch (error) {
+      dispatch(
+        updateRecipeFailure(
+          error.response && error.response.data.message
+            ? error.response.data.message
+            : error.message
+        )
+      );
+    }
+  };
+
+export const deleteRecipe = (recipeId) => async (dispatch, getState) => {
+  try {
+    dispatch(deleteRecipeLoading());
+    await api.delete(`/api/recipes/${recipeId}`);
+    dispatch(deleteRecipeSuccess());
+    dispatch(loadUser());
+  } catch (error) {
+    dispatch(
+      deleteRecipeFailure(
+        error.response && error.response.data.message
+          ? error.response.data.message
+          : error.message
+      )
+    );
+  }
+};
+
+export const getAllRecipies = () => async (dispatch, getState) => {
+  try {
+    dispatch(getAllRecipiesLoading());
+    const { data } = await axios.get('/api/recipes/landing');
+    dispatch(getAllRecipiesSuccess(data));
+  } catch (error) {
+    dispatch(
+      getAllRecipiesFailure(
         error.response && error.response.data.message
           ? error.response.data.message
           : error.message

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import logo from '../../images/logo.png';
 import './NavBar.css';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 import {
   Dialog,
@@ -10,17 +11,48 @@ import {
   DialogContentText,
   DialogActions,
   Button,
+  Menu,
+  MenuItem,
+  Fade,
 } from '@mui/material';
 
-const NavBar = (props) => {
-  const { searchItem } = props;
+const NavBar = ({ searchValue }) => {
   const [value, setValue] = useState('');
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
   const navigate = useNavigate();
-
+  const [cateogriesList, setCategoriesList] = useState([]);
 
   const [showLocalRecipeWarning, setShowLocalRecipeWarning] = useState(false);
   const handleCloseWarningMsg = () => {
     setShowLocalRecipeWarning(false);
+  };
+
+  useEffect(() => {
+    ReqCategories();
+    if (searchValue) {
+      setValue(searchValue);
+    }
+  }, [searchValue]);
+
+  const ReqCategories = async () => {
+    try {
+      const res = await axios.get('/api/recipes/categories');
+      setCategoriesList(res.data);
+    } catch (error) {
+      // dispatch error
+    }
+  };
+
+  const onFormSubmit = (e) => {
+    e.preventDefault();
+  };
+
+  const categoryHandleButton = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const categoryHandleClose = () => {
+    setAnchorEl(null);
   };
 
   return (
@@ -73,25 +105,64 @@ const NavBar = (props) => {
       />
 
       <div className='NavBar-navMid'>
-        <Button variant='text' style={{ color: '#6C5D53' }}>
+        <Button
+          id='fade-button'
+          aria-controls={open ? 'fade-menu' : undefined}
+          aria-haspopup='true'
+          aria-expanded={open ? 'true' : undefined}
+          onClick={categoryHandleButton}
+          style={{ color: '#6C5D53' }}>
           Category
+          <i className='fa-solid fa-caret-down'></i>
         </Button>
-        <form className='NavBar-searchBar'>
+        <Menu
+          id='fade-menu'
+          MenuListProps={{
+            'aria-labelledby': 'fade-button',
+          }}
+          anchorEl={anchorEl}
+          open={open}
+          onClose={categoryHandleClose}
+          TransitionComponent={Fade}>
+          {cateogriesList.map((item, index) => {
+            if (index === cateogriesList.length - 1) {
+              return null;
+            }
+            return (
+              <MenuItem
+                key={index}
+                onClick={() => {
+                  navigate(`/search?category=${item.categoriesName}`, {
+                    state: { type: 'category', value: item.categoriesName },
+                  });
+                  categoryHandleClose()
+                }
+                  
+                  
+                }
+                style={{ color: '#6C5D53' }}>
+                {item.categoriesName.toUpperCase()}
+              </MenuItem>
+            );
+          })}
+        </Menu>
+        <form className='NavBar-searchBar' onSubmit={onFormSubmit}>
           <input
             type='text'
             placeholder='Search bar'
+            value={value}
             className='NavBar-bar'
-            // value={searchItem}
             onChange={(e) => setValue(e.target.value)}
           />
           <div className='NavBar-imageWrapper'>
             <button
-              type='button'
+              type='submit'
               className='NavBar-button'
               onClick={() => {
-                navigate('/search', { state: value });
-              }}
-            >
+                navigate(`/search?name=${value}`, {
+                  state: { type: 'name', value: value },
+                });
+              }}>
               <i className='fa-solid NavBar-fa-white fa-magnifying-glass fa-2xl'></i>
             </button>
           </div>
